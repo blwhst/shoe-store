@@ -1,0 +1,341 @@
+﻿@page
+@model ShoeStoreWeb.Pages.Products.IndexModel
+
+@{
+    ViewData["Title"] = "Каталог товаров";
+}
+
+<style>
+    body, .times-font {
+        font-family: 'Times New Roman', serif;
+    }
+
+    .text-black {
+        color: #000000;
+    }
+
+    .main-bg {
+        background-color: #FFFFFF;
+    }
+
+    .secondary-bg {
+        background-color: #7FFF00;
+    }
+
+    .accent-bg {
+        background-color: #00FA9A;
+    }
+
+    .accent-border {
+        border: 2px solid #00FA9A;
+    }
+
+    .secondary-border {
+        border: 1px solid #7FFF00;
+    }
+
+    .discount-high {
+        background-color: #2E8B57 !important;
+        color: white !important;
+    }
+
+    .btn-order, .btn-filter {
+        background-color: #00FA9A;
+        color: #000;
+        border: 1px solid #ccc;
+        font-family: 'Times New Roman', serif;
+        padding: 8px 20px;
+    }
+
+        .btn-order:hover, .btn-filter:hover {
+            background-color: #00CD8B;
+        }
+
+        .btn-order:disabled,
+        .btn-order.disabled {
+            background-color: #cccccc !important;
+            color: #666666 !important;
+            border-color: #aaaaaa !important;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+            .btn-order:disabled:hover,
+            .btn-order.disabled:hover {
+                background-color: #cccccc !important;
+            }
+
+    .page-title {
+        font-weight: bold;
+        color: #000000;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+
+    .product-card {
+        margin: 10px;
+        border: 2px solid #00FA9A;
+        background-color: #FFFFFF;
+    }
+
+    .inner-card {
+        margin: 5px;
+        background-color: #FFFFFF;
+        border: 1px solid #7FFF00;
+    }
+
+    .photo-card {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .info-card {
+        flex: 2;
+    }
+
+    .discount-card {
+        flex: 0.5;
+    }
+
+    .filter-card {
+        background-color: #FFFFFF;
+        border: 2px solid #00FA9A;
+        margin-bottom: 20px;
+    }
+
+    .filter-header {
+        background-color: #7FFF00;
+        color: #000000;
+        font-weight: bold;
+        padding: 10px 15px;
+        border-bottom: 2px solid #00FA9A;
+    }
+
+    .img-center {
+        display: block;
+        margin: 0 auto;
+    }
+
+    .stock-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 0.85em;
+        font-weight: bold;
+        margin-left: 5px;
+    }
+
+    .in-stock {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .out-of-stock {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+</style>
+
+<h1 class="times-font page-title text-black">Каталог товаров</h1>
+
+<div class="card mb-4 filter-card">
+    <div class="filter-header times-font">
+        Фильтры и поиск
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label times-font text-black">Поиск по описанию:</label>
+                <input type="text" class="form-control times-font" name="search"
+                       placeholder="Введите часть описания..."
+                       value="@Request.Query["search"]">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label times-font text-black">Производитель:</label>
+                <select class="form-select times-font" name="manufacturerId">
+                    <option value="">Все производители</option>
+                    @foreach (var manufacturer in Model.Manufacturers)
+                    {
+                        <option value="@manufacturer.ManufacturerId"
+                                selected="@(Request.Query["manufacturerId"] == manufacturer.ManufacturerId.ToString())">
+                            @manufacturer.Name
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label times-font text-black">Макс. цена:</label>
+                <input type="number" class="form-control times-font" name="maxPrice"
+                       placeholder="До..."
+                       value="@Request.Query["maxPrice"]">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label times-font text-black">Сортировка:</label>
+                <select class="form-select times-font" name="sortBy">
+                    <option value="name" selected="@(Request.Query["sortBy"] == "name")">По названию</option>
+                    <option value="supplier" selected="@(Request.Query["sortBy"] == "supplier")">По поставщику</option>
+                    <option value="price" selected="@(Request.Query["sortBy"] == "price")">По цене (возр.)</option>
+                    <option value="price_desc" selected="@(Request.Query["sortBy"] == "price_desc")">По цене (убыв.)</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" name="onlyDiscount" value="true"
+                           id="onlyDiscount" @(Request.Query["onlyDiscount"] == "true" ? "checked" : "")>
+                    <label class="form-check-label times-font text-black" for="onlyDiscount">
+                        Только со скидкой
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="onlyInStock" value="true"
+                           id="onlyInStock" @(Request.Query["onlyInStock"] == "true" ? "checked" : "")>
+                    <label class="form-check-label times-font text-black" for="onlyInStock">
+                        Только в наличии
+                    </label>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-filter">Применить фильтры</button>
+                <a href="@Url.Page("./Index")" class="btn btn-secondary times-font">Сбросить</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="container">
+    <div class="row">
+        @foreach (var item in Model.Products)
+        {
+            <div class="col-md-12 mb-3">
+                <div class="card product-card">
+                    <div style="display: flex">
+                        <div class="card inner-card photo-card">
+                            <div class="card-body d-flex align-items-center justify-content-center">
+                                <img src="/images/@(item.Photo ?? "picture.png")"
+                                     alt="@item.Name" width="150px" class="img-center">
+                            </div>
+                        </div>
+
+                        <div class="card inner-card info-card">
+                            <div class="card-body times-font text-black">
+                                <div class="mb-2">
+                                    <span class="fw-bold">Категория товара:</span> @item.Category?.Name |
+                                    <span class="fw-bold">Наименование товара:</span> @item.Name
+                                </div>
+
+                                <div class="mb-2">
+                                    <span class="fw-bold">Описание товара:</span> @item.Description
+                                </div>
+
+                                <div class="mb-2">
+                                    <span class="fw-bold">Производитель:</span> @item.Manufacturer?.Name
+                                </div>
+
+                                <div class="mb-2">
+                                    <span class="fw-bold">Поставщик:</span> @item.Supplier?.Name
+                                </div>
+
+                                <div class="mb-2">
+                                    <span class="fw-bold">Цена:</span>
+                                    @if (item.Discount > 0)
+                                    {
+                                        <span class="text-danger fw-bold">
+                                            @((item.Price * (100 - item.Discount) / 100).ToString("C"))
+                                        </span>
+                                        <span class="text-decoration-line-through text-muted ms-2">
+                                            @item.Price.ToString("C")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>@item.Price.ToString("C")</span>
+                                    }
+                                </div>
+
+                                <div class="mb-2">
+                                    <span class="fw-bold">Единица измерения:</span> @item.Unit
+                                </div>
+
+                                <div class="mb-2">
+                                    <span class="fw-bold">Количество на складе:</span>
+                                    @if (item.Quantity > 0)
+                                    {
+                                        <span class="text-success">@item.Quantity шт.</span>
+                                        <span class="stock-badge in-stock">В наличии</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger">0 шт.</span>
+                                        <span class="stock-badge out-of-stock">Нет в наличии</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card inner-card discount-card text-center @(item.Discount > 15 ? "discount-high" : "")">
+                            <div class="card-body d-flex flex-column justify-content-center times-font">
+                                @if (item.Discount > 0)
+                                {
+                                    <div class="fw-bold" style="font-size: 1.5em;">-@item.Discount%</div>
+                                    <div class="small">Действующая скидка</div>
+                                }
+                                else
+                                {
+                                    <div class="text-muted">—</div>
+                                    <div class="text-muted small">Нет скидки</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-transparent border-top text-center">
+                        @if (item.Quantity > 0)
+                        {
+                            <form method="post" asp-page-handler="Order" class="d-inline">
+                                <input type="hidden" name="article" value="@item.Article" />
+                                <button type="submit" class="btn btn-order">Заказать</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form method="post" asp-page-handler="Order" class="d-inline">
+                                <input type="hidden" name="article" value="@item.Article" />
+                                <button type="submit" class="btn btn-order disabled" disabled>Заказать</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (!Model.Products.Any())
+{
+    <div class="alert alert-info text-center times-font text-black">
+        Товары не найдены. Попробуйте изменить параметры фильтрации.
+    </div>
+}

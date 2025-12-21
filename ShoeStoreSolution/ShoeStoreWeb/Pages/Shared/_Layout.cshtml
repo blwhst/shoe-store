@@ -1,0 +1,119 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Магазин обуви</title>
+    <link rel="icon" href="~/Icon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/ShoeStoreWeb.styles.css" asp-append-version="true" />
+
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            background-color: #FFFFFF;
+        }
+
+        .navbar-custom {
+            background-color: #f8f9fa !important;
+            border-bottom: 2px solid #00FA9A;
+        }
+
+        .navbar-brand-custom {
+            font-family: 'Times New Roman', serif;
+            font-weight: bold;
+            color: #000000 !important;
+        }
+
+        .nav-link-custom {
+            font-family: 'Times New Roman', serif;
+            color: #000000 !important;
+        }
+
+            .nav-link-custom:hover {
+                color: #00FA9A !important;
+            }
+
+        .footer-custom {
+            background-color: #f8f9fa;
+            border-top: 2px solid #00FA9A;
+        }
+
+        .user-info {
+            font-weight: normal;
+            font-size: 0.9rem;
+            color: #000000 !important;
+            margin-bottom: 0 !important;
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-custom box-shadow mb-3">
+            <div class="container">
+                <a class="navbar-brand navbar-brand-custom" asp-area="" asp-page="/Products/Index">
+                    <img src="~/Icon.ico" alt="Логотип" width="30" height="30" class="d-inline-block align-text-top me-2">
+                    Магазин обуви
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-custom" asp-area="" asp-page="/Products/Index">Товары</a>
+                        </li>
+                        @if (!string.IsNullOrEmpty(Context.Session.GetString("UserId")))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-custom" asp-area="" asp-page="/Orders/Index">Заказы</a>
+                            </li>
+                        }
+                    </ul>
+                    <ul class="navbar-nav align-items-center">
+                        @if (string.IsNullOrEmpty(Context.Session.GetString("UserId")))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-custom" asp-page="/Account/Login">Войти</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <span class="nav-link nav-link-custom user-info">
+                                    @Context.Session.GetString("UserName")
+                                </span>
+                            </li>
+                            <li class="nav-item ms-2">
+                                <form method="post" asp-page="/Account/Logout" class="d-inline mb-0">
+                                    <button type="submit" class="btn btn-link nav-link nav-link-custom p-0">Выйти</button>
+                                </form>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer footer-custom text-muted">
+        <div class="container">
+            &copy; 2025 - Магазин обуви
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

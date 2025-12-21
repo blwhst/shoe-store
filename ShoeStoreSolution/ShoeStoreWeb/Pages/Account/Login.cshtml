@@ -1,0 +1,55 @@
+﻿@page
+@model ShoeStoreWeb.Pages.Account.Login
+
+@{
+    ViewData["Title"] = "Вход в систему";
+}
+
+<style>
+    .login-form {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #FFFFFF;
+        border: 2px solid #00FA9A;
+        border-radius: 5px;
+    }
+</style>
+
+<div class="login-form">
+    <h2 class="text-center times-font text-black mb-4">Вход в систему</h2>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="post">
+        <div class="form-group mb-3">
+            <label asp-for="LoginData.Email" class="form-label times-font">Логин</label>
+            <input asp-for="LoginData.Email" class="form-control times-font"
+                   placeholder="Введите email" />
+            <span asp-validation-for="LoginData.Email" class="text-danger"></span>
+        </div>
+
+        <div class="form-group mb-3">
+            <label asp-for="LoginData.Password" class="form-label times-font">Пароль</label>
+            <input asp-for="LoginData.Password" class="form-control times-font"
+                   type="password" placeholder="Введите пароль" />
+            <span asp-validation-for="LoginData.Password" class="text-danger"></span>
+        </div>
+
+        <div class="form-group text-center">
+            <button type="submit" class="btn btn-primary times-font"
+                    style="background-color: #00FA9A; color: #000; border: 1px solid #2E8B57;">
+                Войти
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
