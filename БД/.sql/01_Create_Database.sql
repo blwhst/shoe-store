@@ -1,0 +1,3 @@
+CREATE DATABASE ShoeStoreDb
+
+USE ShoeStoreDb
