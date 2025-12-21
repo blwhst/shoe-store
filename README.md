@@ -207,6 +207,27 @@
 - Реализован доступ к заказам по логину пользователя (модель `User`)
 - Добавлена возможность изменения статуса заказа через `OrderUpdateDto`
 
+**Реализованные методы API:**
+
+**AuthController:**
+- `POST /api/auth/login` - авторизация с JWT токеном
+
+**ProductsController:**
+- `GET /api/products` - получение всех товаров
+- `GET /api/products/{article}` - товар по артикулу  
+- `POST /api/products` - добавление товара (Администратор/Менеджер)
+- `PUT /api/products/{article}` - обновление товара (Администратор/Менеджер)
+- `DELETE /api/products/{article}` - удаление товара (Администратор/Менеджер)
+
+**OrdersController:**
+- `GET /api/orders/user/{login}` - заказы пользователя (авторизация)
+- `PUT /api/orders/{id}` - изменение статуса и даты доставки (Администратор/Менеджер)
+
+**Тестирование API:**
+- Swagger UI доступен по адресу: `http://localhost:5032/swagger/index.html`
+- При запуске проекта `ShoeStoreAPI` открывается интерфейс Swagger для тестирования
+- JWT токен добавляется через кнопку "Authorize" в Swagger
+
 **Используемые модели:** `Product`, `Order`, `User`, `Role`, `LoginRequest`, `OrderUpdateDto`, `AuthOptions`
 
 ### Задание 4. Просмотр списка товаров в веб-приложении
