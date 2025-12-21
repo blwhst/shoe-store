@@ -98,7 +98,7 @@ public partial class ShoeStoreDbContext : DbContext
 
             entity.Property(e => e.Article).HasMaxLength(20);
             entity.Property(e => e.Name).HasMaxLength(200);
-            entity.Property(e => e.Photo).HasMaxLength(100);
+            entity.Property(e => e.Photo).HasMaxLength(500);
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Unit).HasMaxLength(10);
 

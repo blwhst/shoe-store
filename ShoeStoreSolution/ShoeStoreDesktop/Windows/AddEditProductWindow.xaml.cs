@@ -2,6 +2,7 @@
 using ShoeStoreData.Contexts;
 using ShoeStoreData.Models;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -18,6 +19,7 @@ namespace ShoeStoreDesktop.Windows
     {
         private bool _isEditMode = false; // Режим работы: true - редактирование, false - добавление
         private Product _editingProduct = null; // Товар для редактирования
+        private string _currentImagePath = null; // Полный путь к текущему изображению (хранится в памяти, не показывается пользователю)
 
         public bool ProductSaved { get; private set; }
 
@@ -99,7 +101,7 @@ namespace ShoeStoreDesktop.Windows
         // Загрузка данных товара для редактирования
         private void LoadProductData()
         {
-            if (_editingProduct == null) 
+            if (_editingProduct == null)
                 return;
 
             // Заполняем поля данными товара
@@ -164,30 +166,35 @@ namespace ShoeStoreDesktop.Windows
 
                 if (!string.IsNullOrWhiteSpace(imagePath))
                 {
-                    string imagesFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
-                    string fullPath = Path.Combine(imagesFolder, imagePath);
+                    // Сохраняем полный путь в памяти
+                    _currentImagePath = imagePath;
 
-                    if (File.Exists(fullPath))
+                    // Показываем только имя файла пользователю
+                    string fileNameOnly = Path.GetFileName(imagePath);
+                    photoPathTextBox.Text = fileNameOnly;
+
+                    // Проверяем существование файла
+                    if (File.Exists(imagePath))
                     {
                         // Загружаем изображение из файла
                         var bitmap = new BitmapImage();
                         bitmap.BeginInit();
-                        bitmap.UriSource = new Uri(fullPath);
+                        bitmap.UriSource = new Uri(imagePath);
                         bitmap.CacheOption = BitmapCacheOption.OnLoad;
                         bitmap.EndInit();
                         productImagePreview.Source = bitmap;
-                        photoPathTextBox.Text = imagePath;
                     }
                     else
                     {
                         // Если файл не найден - показываем иконку по умолчанию
                         productImagePreview.Source = new BitmapImage(new Uri("pack://application:,,,/Icon.ico"));
-                        photoPathTextBox.Text = "";
+                        // _currentImagePath остается установленным, чтобы сохранить в БД
                     }
                 }
                 else
                 {
                     // Если путь пустой - показываем иконку по умолчанию
+                    _currentImagePath = null;
                     productImagePreview.Source = new BitmapImage(new Uri("pack://application:,,,/Icon.ico"));
                     photoPathTextBox.Text = "";
                 }
@@ -197,6 +204,7 @@ namespace ShoeStoreDesktop.Windows
                 var productImagePreview = FindName("ProductImagePreview") as System.Windows.Controls.Image;
                 if (productImagePreview != null)
                     productImagePreview.Source = new BitmapImage(new Uri("pack://application:,,,/Icon.ico"));
+                // В случае ошибки _currentImagePath остается как был
             }
         }
 
@@ -229,6 +237,7 @@ namespace ShoeStoreDesktop.Windows
                     string fileNameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
                     string fileExtension = Path.GetExtension(fileName);
 
+                    // Проверяем, существует ли файл с таким именем
                     while (File.Exists(destinationFilePath))
                     {
                         string newFileName = $"{fileNameWithoutExt}_{counter}{fileExtension}";
@@ -236,10 +245,21 @@ namespace ShoeStoreDesktop.Windows
                         counter++;
                     }
 
+                    // Копируем файл в папку Images
                     File.Copy(sourceFilePath, destinationFilePath, true);
 
-                    string savedFileName = Path.GetFileName(destinationFilePath);
-                    LoadProductImage(savedFileName);
+                    // Сохраняем полный путь в памяти
+                    _currentImagePath = destinationFilePath;
+
+                    var photoPathTextBox = FindName("PhotoPathTextBox") as System.Windows.Controls.TextBox;
+                    if (photoPathTextBox != null)
+                    {
+                        // Показываем только имя файла пользователю
+                        photoPathTextBox.Text = Path.GetFileName(destinationFilePath);
+                    }
+
+                    // Загружаем изображение в preview
+                    LoadProductImage(destinationFilePath);
                 }
                 catch (Exception ex)
                 {
@@ -252,6 +272,12 @@ namespace ShoeStoreDesktop.Windows
         // Обработчик очистки изображения товара
         private void ClearImageButton_Click(object sender, RoutedEventArgs e)
         {
+            _currentImagePath = null;
+            var photoPathTextBox = FindName("PhotoPathTextBox") as System.Windows.Controls.TextBox;
+            if (photoPathTextBox != null)
+            {
+                photoPathTextBox.Text = "";
+            }
             LoadProductImage(null);
         }
 
@@ -307,6 +333,14 @@ namespace ShoeStoreDesktop.Windows
                         product = new Product(); // Создаем новый товар
                     }
 
+                    // Проверяем, меняется ли изображение при редактировании
+                    if (_isEditMode && _editingProduct != null)
+                    {
+                        string oldImagePath = _editingProduct.Photo;
+                        // Удаляем старое изображение, если оно было заменено на новое
+                        DeleteOldImageIfNeeded(oldImagePath, _currentImagePath);
+                    }
+
                     // Заполняем свойства товара данными из формы
                     product.Article = ArticleTextBox.Text.Trim();
                     product.Name = NameTextBox.Text.Trim();
@@ -316,12 +350,8 @@ namespace ShoeStoreDesktop.Windows
                     product.Discount = int.Parse(DiscountTextBox.Text);
                     product.Quantity = int.Parse(QuantityTextBox.Text);
 
-                    // Получаем путь к изображению из текстового поля
-                    var photoPathTextBox = FindName("PhotoPathTextBox") as System.Windows.Controls.TextBox;
-                    if (photoPathTextBox != null)
-                    {
-                        product.Photo = photoPathTextBox.Text?.Trim();
-                    }
+                    // Сохраняем полный путь к изображению в БД
+                    product.Photo = _currentImagePath;
 
                     // Устанавливаем связи с категорией, производителем и поставщиком
                     if (CategoryComboBox.SelectedItem is Category selectedCategory)
@@ -363,6 +393,33 @@ namespace ShoeStoreDesktop.Windows
             {
                 // Обработка общих ошибок
                 ShowError($"Ошибка при сохранении товара: {ex.Message}");
+            }
+        }
+
+        // Удаление старого изображения при замене на новое
+        private void DeleteOldImageIfNeeded(string oldImagePath, string newImagePath)
+        {
+            try
+            {
+                // Удаляем старое изображение только если:
+                // 1. Было старое изображение
+                // 2. Новое изображение отличается от старого
+                // 3. Новое изображение не пустое
+                if (!string.IsNullOrWhiteSpace(oldImagePath) &&
+                    !string.IsNullOrWhiteSpace(newImagePath) &&
+                    oldImagePath != newImagePath)
+                {
+                    // Проверяем, существует ли файл перед удалением
+                    if (File.Exists(oldImagePath))
+                    {
+                        File.Delete(oldImagePath);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Логируем ошибку, но не прерываем выполнение основной операции
+                Debug.WriteLine($"Ошибка при удалении старого изображения: {ex.Message}");
             }
         }
 
