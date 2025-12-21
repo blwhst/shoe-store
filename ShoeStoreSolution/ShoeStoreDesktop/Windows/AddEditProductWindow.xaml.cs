@@ -166,34 +166,52 @@ namespace ShoeStoreDesktop.Windows
 
                 if (!string.IsNullOrWhiteSpace(imagePath))
                 {
-                    // Сохраняем полный путь в памяти
+                    // Сохраняем оригинальный путь
                     _currentImagePath = imagePath;
 
-                    // Показываем только имя файла пользователю
+                    // Показываем только имя файла
                     string fileNameOnly = Path.GetFileName(imagePath);
                     photoPathTextBox.Text = fileNameOnly;
 
-                    // Проверяем существование файла
-                    if (File.Exists(imagePath))
+                    // Формируем путь для загрузки
+                    string fullPath;
+
+                    // Проверяем тип пути
+                    if (Path.IsPathRooted(imagePath))
                     {
-                        // Загружаем изображение из файла
+                        // 1. Полный путь (новые товары)
+                        fullPath = imagePath;
+                    }
+                    else if (imagePath.Contains("\\") || imagePath.Contains("/"))
+                    {
+                        // 2. Относительный путь
+                        string basePath = AppDomain.CurrentDomain.BaseDirectory;
+                        fullPath = Path.Combine(basePath, imagePath);
+                    }
+                    else
+                    {
+                        // 3. Только имя файла (старые товары)
+                        string imagesFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
+                        fullPath = Path.Combine(imagesFolder, imagePath);
+                    }
+
+                    // Пытаемся загрузить
+                    if (File.Exists(fullPath))
+                    {
                         var bitmap = new BitmapImage();
                         bitmap.BeginInit();
-                        bitmap.UriSource = new Uri(imagePath);
+                        bitmap.UriSource = new Uri(fullPath);
                         bitmap.CacheOption = BitmapCacheOption.OnLoad;
                         bitmap.EndInit();
                         productImagePreview.Source = bitmap;
                     }
                     else
                     {
-                        // Если файл не найден - показываем иконку по умолчанию
                         productImagePreview.Source = new BitmapImage(new Uri("pack://application:,,,/Icon.ico"));
-                        // _currentImagePath остается установленным, чтобы сохранить в БД
                     }
                 }
                 else
                 {
-                    // Если путь пустой - показываем иконку по умолчанию
                     _currentImagePath = null;
                     productImagePreview.Source = new BitmapImage(new Uri("pack://application:,,,/Icon.ico"));
                     photoPathTextBox.Text = "";
@@ -204,7 +222,6 @@ namespace ShoeStoreDesktop.Windows
                 var productImagePreview = FindName("ProductImagePreview") as System.Windows.Controls.Image;
                 if (productImagePreview != null)
                     productImagePreview.Source = new BitmapImage(new Uri("pack://application:,,,/Icon.ico"));
-                // В случае ошибки _currentImagePath остается как был
             }
         }
 
